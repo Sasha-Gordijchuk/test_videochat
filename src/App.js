@@ -7,6 +7,7 @@ const WebRTCComponent = () => {
   const ws = useRef(null);
 
   const [isConnected, setIsConnected] = useState(false);
+  const [allMediaDevices, setAllMediaDevices] = useState();
   const [devices, setDevices] = useState({ video: [], audio: [] });
   const [selectedVideoDevice, setSelectedVideoDevice] = useState("");
   const [selectedAudioDevice, setSelectedAudioDevice] = useState("");
@@ -23,6 +24,16 @@ const WebRTCComponent = () => {
     };
 
     getMediaDevices();
+
+    const handleDeviceChange = () => {
+      getMediaDevices();
+    };
+
+    navigator.mediaDevices.addEventListener("devicechange", handleDeviceChange);
+
+    return () => {
+      navigator.mediaDevices.removeEventListener("devicechange", handleDeviceChange);
+    };
   }, []);
 
   useEffect(() => {
@@ -103,6 +114,8 @@ const WebRTCComponent = () => {
       connectionRef.current.close();
     };
   }, []);
+
+  
 
   const startStream = async () => {
     const constraints = {
@@ -188,7 +201,7 @@ const WebRTCComponent = () => {
           </select>
         </label>
       </div>
-      <div style={{ display: "flex", gap: "20px" }}>
+      <div style={{ display: "flex", gap: "20px", flexWrap: 'wrap' }}>
         <video
           ref={localVideoRef}
           autoPlay
