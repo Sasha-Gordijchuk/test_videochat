@@ -7,6 +7,6 @@ const options = {
   transports : ["websocket"]
 }
 
-const socket = io('localhost:3001', options);
+const socket = io('wsserver-production-e0c9.up.railway.app:8080', options);
 
 export default socket;
