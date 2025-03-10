@@ -1,22 +1,24 @@
-import { useEffect, useRef, useCallback } from 'react';
-import freeice from 'freeice';
-import useStateWithCallback from './useStateWithCallback';
-import socket from '../socket';
-import ACTIONS from '../socket/actions';
+import { useEffect, useRef, useCallback } from "react";
+import useStateWithCallback from "./useStateWithCallback";
+import socket from "../socket";
+import ACTIONS from "../socket/actions";
 
-export const LOCAL_VIDEO = 'LOCAL_VIDEO';
+export const LOCAL_VIDEO = "LOCAL_VIDEO";
 
 export default function useWebRTC(roomID) {
   const [clients, updateClients] = useStateWithCallback([]);
 
-  const addNewClient = useCallback((newClient, cb) => {
-    updateClients((list) => {
-      if (!list.includes(newClient)) {
-        return [...list, newClient];
-      }
-      return list;
-    }, cb);
-  }, [updateClients]);
+  const addNewClient = useCallback(
+    (newClient, cb) => {
+      updateClients((list) => {
+        if (!list.includes(newClient)) {
+          return [...list, newClient];
+        }
+        return list;
+      }, cb);
+    },
+    [updateClients]
+  );
 
   const peerConnections = useRef({});
   const localMediaStream = useRef(null);
@@ -31,7 +33,16 @@ export default function useWebRTC(roomID) {
       }
 
       const peerConnection = new RTCPeerConnection({
-        iceServers: freeice(),
+        iceServers: [
+          {
+            urls: "stun:mcu.ap.education:5349",
+          },
+          {
+            urls: "turn:mcu.ap.education:5349",
+            username: "mcuuser",
+            credential: "ExQGw3dhYfrY6PFj7FsaB92zJl",
+          },
+        ],
       });
 
       peerConnections.current[peerID] = peerConnection;
@@ -84,13 +95,18 @@ export default function useWebRTC(roomID) {
   }, [addNewClient]);
 
   useEffect(() => {
-    async function setRemoteMedia({ peerID, sessionDescription: remoteDescription }) {
+    async function setRemoteMedia({
+      peerID,
+      sessionDescription: remoteDescription,
+    }) {
       const peerConnection = peerConnections.current[peerID];
       if (!peerConnection) return;
 
-      await peerConnection.setRemoteDescription(new RTCSessionDescription(remoteDescription));
+      await peerConnection.setRemoteDescription(
+        new RTCSessionDescription(remoteDescription)
+      );
 
-      if (remoteDescription.type === 'offer') {
+      if (remoteDescription.type === "offer") {
         const answer = await peerConnection.createAnswer();
         await peerConnection.setLocalDescription(answer);
 
@@ -149,8 +165,8 @@ export default function useWebRTC(roomID) {
         localMediaStream.current = await navigator.mediaDevices.getUserMedia({
           audio: true,
           video: {
-            width: 1280,
-            height: 720,
+            width: 1920,
+            height: 1080,
           },
         });
 
@@ -164,7 +180,7 @@ export default function useWebRTC(roomID) {
 
         socket.emit(ACTIONS.JOIN, { room: roomID });
       } catch (error) {
-        console.error('Error getting userMedia:', error);
+        console.error("Error getting userMedia:", error);
       }
     }
 
